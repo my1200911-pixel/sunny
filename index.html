@@ -12,7 +12,7 @@ header{background:white;padding:15px 20px;display:flex;justify-content:space-bet
 .logo{font-weight:600;font-size:20px;}
 .admin-btn{background:#2d3436;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;}
 
-.hero{margin-top:70px;height:35vh;background:url('https://i.ibb.co/xKwmSVJM/fashion-store-front-banners-vector.jpg') center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:white;position:relative;text-align:center;}
+.hero{margin-top:70px;height:35vh;background:url('https://i.ibb.co/93fd92Mf/Screenshot-2026-03-01-035001.png') center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:white;position:relative;text-align:center;}
 .hero::after{content:"";position:absolute;width:100%;height:100%;background:rgba(0,0,0,0.5);top:0;left:0;}
 .hero-content{position:relative;z-index:2;}
 
@@ -38,7 +38,7 @@ header{background:white;padding:15px 20px;display:flex;justify-content:space-bet
 .cart-item{background:#f1f3f6;padding:12px;border-radius:10px;margin-bottom:12px;line-height:1.6;}
 .qty-btn{padding:4px 8px;margin:0 5px;background:#0984e3;color:white;border:none;border-radius:5px;cursor:pointer;}
 .summary{margin-top:15px;padding-top:10px;border-top:1px solid #ccc;line-height:1.8;}
-.save-msg{color:green;font-weight:600;margin-top:5px;}
+.save-msg{color:#27ae60;font-weight:600;margin-top:5px;}
 .clear-btn{background:#d63031;color:white;border:none;padding:6px 10px;border-radius:6px;margin-top:10px;cursor:pointer;}
 .send-btn{background:#00b894;color:white;padding:10px;border:none;width:100%;border-radius:8px;cursor:pointer;margin-top:10px;}
 .cart-drawer input{width:100%;padding:8px;margin-top:8px;border-radius:6px;border:1px solid #ccc;}
@@ -157,19 +157,16 @@ function calculatePricing(subtotal) {
   if (subtotal < 699) {
     // no discount
   } else if (subtotal < 899) {
-    // 9–10% → aim for ceiling effect
-    let target = Math.ceil(subtotal * 0.90);  // try 10% first
+    let target = Math.ceil(subtotal * 0.90);
     discount = subtotal - target;
     discountPercent = (discount / subtotal) * 100;
     if (discountPercent < 9) {
-      // too low → move to 9%
       target = Math.ceil(subtotal * 0.91);
       discount = subtotal - target;
       discountPercent = (discount / subtotal) * 100;
     }
     discountLabel = discountPercent.toFixed(1) + "%";
   } else {
-    // ≥899 → 10% capped at 100
     discount = Math.min(Math.floor(subtotal * 0.10), 100);
     discountPercent = (discount / subtotal) * 100;
     discountLabel = "10% (max ₹100)";
@@ -179,6 +176,7 @@ function calculatePricing(subtotal) {
 
   let delivery = 0;
   let deliveryLabel = "";
+  let deliverySaved = 0;
 
   if (subtotal <= 399) {
     delivery = 0;
@@ -186,14 +184,16 @@ function calculatePricing(subtotal) {
   } else if (subtotal <= 699) {
     delivery = 40;
     deliveryLabel = "₹40";
+    deliverySaved = 0;
   } else {
-    // tov > 699 → depends on after discount
     if (afterDiscount >= 699) {
       delivery = 0;
       deliveryLabel = "Free";
+      deliverySaved = 40;
     } else {
       delivery = 20;
-      deliveryLabel = "₹20 (reduced)";
+      deliveryLabel = "₹20";
+      deliverySaved = 20;
     }
   }
 
@@ -207,7 +207,10 @@ function calculatePricing(subtotal) {
     afterDiscount: Math.round(afterDiscount),
     delivery,
     deliveryLabel,
-    final: Math.round(final)
+    deliverySaved,
+    final: Math.round(final),
+    canOrder: subtotal > 399,
+    totalSaved: Math.round(discount) + deliverySaved
   };
 }
 
@@ -240,11 +243,15 @@ function updateCart() {
     ? `<span style="color:#27ae60">Free Delivery</span><br>`
     : `Delivery: ${p.deliveryLabel}<br>`;
 
-  let saveMsg = p.discount > 0
-    ? `<div class="save-msg">🎉 You saved ₹${p.discount}</div>`
-    : "";
+  let saveMsg = "";
+  if (p.totalSaved > 0) {
+    saveMsg = `<div class="save-msg">
+      🎉 Total Saved: ₹${p.totalSaved}<br>
+      (Discount: ₹${p.discount}${p.deliverySaved > 0 ? " + Delivery: ₹" + p.deliverySaved : ""})
+    </div>`;
+  }
 
-  let warning = subtotal <= 399
+  let warning = !p.canOrder
     ? `<div style="color:#e74c3c; margin:10px 0; font-weight:500;">Minimum order ₹400 required</div>`
     : "";
 
@@ -304,12 +311,12 @@ function sendOrder() {
 
   let subtotal = cart.reduce((t, i) => t + products[i.index].price * i.qty, 0);
 
-  if (subtotal <= 399) {
+  const p = calculatePricing(subtotal);
+
+  if (!p.canOrder) {
     alert("Minimum order subtotal is ₹400");
     return;
   }
-
-  const p = calculatePricing(subtotal);
 
   let orderId = "SM" + Date.now();
   let now = new Date().toLocaleString();
@@ -344,7 +351,9 @@ function sendOrder() {
   if (p.delivery === 20) msg += " (reduced)";
   msg += "%0A";
   msg += `💰 *Final Payable: ₹${p.final}*%0A%0A`;
-  if (p.discount > 0) msg += `🎉 You saved ₹${p.discount} today!%0A`;
+  if (p.totalSaved > 0) {
+    msg += `🎉 Total Saved Today: ₹${p.totalSaved} (Discount + Delivery)%0A`;
+  }
   msg += "Thank you for shopping with Sunny Medicoze! 🙏";
 
   window.open("https://wa.me/919817824881?text=" + msg, "_blank");
