@@ -12,7 +12,7 @@ header{background:white;padding:15px 20px;display:flex;justify-content:space-bet
 .logo{font-weight:600;font-size:20px;}
 .admin-btn{background:#2d3436;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;}
 
-.hero{margin-top:70px;height:35vh;background:url('https://i.ibb.co/93fd92Mf/Screenshot-2026-03-01-035001.png') center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:white;position:relative;text-align:center;}
+.hero{margin-top:70px;height:35vh;background:url('https://i.ibb.co/xKwmSVJM/fashion-store-front-banners-vector.jpg') center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:white;position:relative;text-align:center;}
 .hero::after{content:"";position:absolute;width:100%;height:100%;background:rgba(0,0,0,0.5);top:0;left:0;}
 .hero-content{position:relative;z-index:2;}
 
@@ -122,9 +122,8 @@ let products = [
 function renderProducts() {
   productGrid.innerHTML = "";
   products.forEach((p, i) => {
-    let msg = "";
-    if (p.stock <= 0) msg = "<div class='low-stock'>Out of Stock</div>";
-    else if (p.stock <= 3) msg = "<div class='low-stock'>Only " + p.stock + " left</div>";
+    let msg = p.stock <= 0 ? "<div class='low-stock'>Out of Stock</div>" :
+              p.stock <= 3 ? "<div class='low-stock'>Only " + p.stock + " left</div>" : "";
     productGrid.innerHTML += `
       <div class="product">
         <img src="${p.image}">
@@ -154,9 +153,11 @@ function calculatePricing(subtotal) {
   let discountPercent = 0;
   let discountLabel = "";
 
-  if (subtotal < 699) {
-    // no discount
-  } else if (subtotal < 899) {
+  if (subtotal >= 899) {
+    discount = Math.min(Math.floor(subtotal * 0.10), 100);
+    discountPercent = (discount / subtotal) * 100;
+    discountLabel = "10% (max ₹100)";
+  } else if (subtotal > 699) {
     let target = Math.ceil(subtotal * 0.90);
     discount = subtotal - target;
     discountPercent = (discount / subtotal) * 100;
@@ -166,10 +167,6 @@ function calculatePricing(subtotal) {
       discountPercent = (discount / subtotal) * 100;
     }
     discountLabel = discountPercent.toFixed(1) + "%";
-  } else {
-    discount = Math.min(Math.floor(subtotal * 0.10), 100);
-    discountPercent = (discount / subtotal) * 100;
-    discountLabel = "10% (max ₹100)";
   }
 
   let afterDiscount = subtotal - discount;
@@ -181,11 +178,13 @@ function calculatePricing(subtotal) {
   if (subtotal <= 399) {
     delivery = 0;
     deliveryLabel = "—";
+    deliverySaved = 0;
   } else if (subtotal <= 699) {
     delivery = 40;
     deliveryLabel = "₹40";
     deliverySaved = 0;
   } else {
+    // subtotal > 699 → delivery decided **after** discount
     if (afterDiscount >= 699) {
       delivery = 0;
       deliveryLabel = "Free";
@@ -235,25 +234,20 @@ function updateCart() {
 
   const p = calculatePricing(subtotal);
 
-  let discountLine = p.discount > 0
-    ? `Discount (${p.discountLabel}): -₹${p.discount}<br>`
-    : "";
+  let discountLine = p.discount > 0 ? `Discount (${p.discountLabel}): -₹${p.discount}<br>` : "";
 
-  let deliveryLine = p.deliveryLabel === "Free"
-    ? `<span style="color:#27ae60">Free Delivery</span><br>`
-    : `Delivery: ${p.deliveryLabel}<br>`;
+  let deliveryLine = p.deliveryLabel === "Free" ? `<span style="color:#27ae60">Free Delivery</span><br>` :
+                     `Delivery: ${p.deliveryLabel}${p.delivery === 20 ? " (reduced)" : ""}<br>`;
 
   let saveMsg = "";
   if (p.totalSaved > 0) {
     saveMsg = `<div class="save-msg">
       🎉 Total Saved: ₹${p.totalSaved}<br>
-      (Discount: ₹${p.discount}${p.deliverySaved > 0 ? " + Delivery: ₹" + p.deliverySaved : ""})
+      (Discount: ₹${p.discount}${p.deliverySaved > 0 ? " + Delivery saved: ₹" + p.deliverySaved : ""})
     </div>`;
   }
 
-  let warning = !p.canOrder
-    ? `<div style="color:#e74c3c; margin:10px 0; font-weight:500;">Minimum order ₹400 required</div>`
-    : "";
+  let warning = !p.canOrder ? `<div style="color:#e74c3c; margin:10px 0; font-weight:500;">Minimum order ₹400 required</div>` : "";
 
   html += `
     <div class="summary">
@@ -310,7 +304,6 @@ function sendOrder() {
   }
 
   let subtotal = cart.reduce((t, i) => t + products[i.index].price * i.qty, 0);
-
   const p = calculatePricing(subtotal);
 
   if (!p.canOrder) {
@@ -351,10 +344,8 @@ function sendOrder() {
   if (p.delivery === 20) msg += " (reduced)";
   msg += "%0A";
   msg += `💰 *Final Payable: ₹${p.final}*%0A%0A`;
-  if (p.totalSaved > 0) {
-    msg += `🎉 Total Saved Today: ₹${p.totalSaved} (Discount + Delivery)%0A`;
-  }
-  msg += "Thank you for shopping with Sunny Medicoze! 🙏";
+  if (p.totalSaved > 0) msg += `🎉 Total Saved Today: ₹${p.totalSaved} (Discount + Delivery)%0A`;
+  msg += "Thank you! 🙏";
 
   window.open("https://wa.me/919817824881?text=" + msg, "_blank");
 
