@@ -12,15 +12,16 @@ header{background:white;padding:15px 20px;display:flex;justify-content:space-bet
 .logo{font-weight:600;font-size:20px;}
 .admin-btn{background:#2d3436;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;}
 
-.hero{margin-top:70px;height:40vh;background:url('https://i.ibb.co/xKwmSVJM/fashion-store-front-banners-vector.jpg') center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:white;position:relative;text-align:center;}
+.hero{margin-top:70px;height:35vh;background:url('https://i.ibb.co/xKwmSVJM/fashion-store-front-banners-vector.jpg') center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:white;position:relative;text-align:center;}
 .hero::after{content:"";position:absolute;width:100%;height:100%;background:rgba(0,0,0,0.5);top:0;left:0;}
 .hero-content{position:relative;z-index:2;}
 
 .products{padding:60px 20px;}
 .search-bar{width:100%;max-width:400px;padding:10px;margin-bottom:20px;border-radius:8px;border:1px solid #ccc;}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;}
+
 .product{background:white;border-radius:15px;padding:15px;box-shadow:0 5px 15px rgba(0,0,0,0.1);text-align:center;}
-.product img{width:100%;height:180px;object-fit:cover;border-radius:10px;}
+.product img{width:100%;height:170px;object-fit:cover;border-radius:10px;}
 .product button{margin-top:10px;width:100%;padding:10px;background:#0984e3;color:white;border:none;border-radius:8px;cursor:pointer;}
 .product button:disabled{background:gray;}
 .low-stock{color:red;font-size:12px;margin-top:5px;}
@@ -39,7 +40,6 @@ header{background:white;padding:15px 20px;display:flex;justify-content:space-bet
 .summary{margin-top:15px;padding-top:10px;border-top:1px solid #ccc;line-height:1.8;}
 .discount-btn{background:#00cec9;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;margin-top:8px;}
 .save-msg{color:green;font-weight:600;margin-top:5px;}
-.delivery-note{font-size:13px;margin-top:5px;color:#e17055;}
 .clear-btn{background:#d63031;color:white;border:none;padding:6px 10px;border-radius:6px;margin-top:10px;cursor:pointer;}
 .send-btn{background:#00b894;color:white;padding:10px;border:none;width:100%;border-radius:8px;cursor:pointer;margin-top:10px;}
 .cart-drawer input{width:100%;padding:8px;margin-top:8px;border-radius:6px;border:1px solid #ccc;}
@@ -106,198 +106,355 @@ header{background:white;padding:15px 20px;display:flex;justify-content:space-bet
 </div>
 
 <script>
-let cart=[],discountApplied=false,orders=[];
-let totalRevenue=0,totalDiscount=0,totalDelivery=0,productSales={};
+let cart = [];
+let orders = [];
+let totalRevenue = 0;
+let totalDiscount = 0;
+let totalDelivery = 0;
+let productSales = {};
 
-let products=[
-{name:"WHISPER CHOICE ULTRA XL PLUS 15 PADS",price:190,stock:10,image:"https://i.ibb.co/tnfsXrv/Screenshot-28-2-2026-9818-www-bing-com.jpg"},
-{name:"SMART AND HANDSOME FW 150 GM",price:290,stock:5,image:"https://i.ibb.co/V0QyR8CV/Screenshot-2026-02-28-113859.png"},
-{name:"LIPTON GREEN TEA HONEY LEMON 25 BAGS",price:170,stock:8,image:"https://i.ibb.co/TM757M6Z/Screenshot-2026-02-28-114158.png"},
-{name:"NOT OUT ADULT DIAPER M SIZE 10 PIECES PACK",price:299,stock:3,image:"https://i.ibb.co/ymr6DgzW/Screenshot-2026-02-28-114541.png"}
+let products = [
+  {name:"WHISPER CHOICE ULTRA XL PLUS 15 PADS",price:190,stock:10,image:"https://i.ibb.co/tnfsXrv/Screenshot-28-2-2026-9818-www-bing-com.jpg"},
+  {name:"SMART AND HANDSOME FW 150 GM",price:290,stock:5,image:"https://i.ibb.co/V0QyR8CV/Screenshot-2026-02-28-113859.png"},
+  {name:"LIPTON GREEN TEA HONEY LEMON 25 BAGS",price:170,stock:8,image:"https://i.ibb.co/TM757M6Z/Screenshot-2026-02-28-114158.png"},
+  {name:"NOT OUT ADULT DIAPER M SIZE 10 PIECES PACK",price:299,stock:3,image:"https://i.ibb.co/ymr6DgzW/Screenshot-2026-02-28-114541.png"}
 ];
 
+// ────────────────────────────────────────────────
+// Pricing & Delivery Rules
+const DISCOUNT_RULES = [
+  { minSub: 0,    percent: 0,   maxDisc: 0   },
+  { minSub: 500,  percent: 15,  maxDisc: 150 },
+  { minSub: 1000, percent: 22,  maxDisc: 400 }
+];
+
+const MIN_TOV_FOR_ORDER       = 399;
+const BASE_DELIVERY_BELOW_700 = 40;
+const HALF_DELIVERY           = 20;
+// ────────────────────────────────────────────────
+
+function getDiscount(subtotal) {
+  let rule = DISCOUNT_RULES[0];
+  for (let r of DISCOUNT_RULES) {
+    if (subtotal >= r.minSub) rule = r;
+  }
+  let discount = Math.floor(subtotal * (rule.percent / 100));
+  if (rule.maxDisc > 0) discount = Math.min(discount, rule.maxDisc);
+  return { discount, percent: rule.percent };
+}
+
+function getDelivery(subtotal, afterDiscount) {
+  if (subtotal <= MIN_TOV_FOR_ORDER) {
+    return { delivery: 0, canOrder: false };
+  }
+
+  let baseDelivery = (subtotal <= 699) ? BASE_DELIVERY_BELOW_700 : 0;
+
+  let finalDelivery;
+  if (afterDiscount >= 699) {
+    finalDelivery = 0;
+  } else {
+    finalDelivery = HALF_DELIVERY; // ₹20
+  }
+
+  return { delivery: finalDelivery, canOrder: true };
+}
+
 function renderProducts(){
-productGrid.innerHTML="";
-products.forEach((p,i)=>{
-let msg="";
-if(p.stock<=0) msg="<div class='low-stock'>Out of Stock</div>";
-else if(p.stock<=3) msg="<div class='low-stock'>Only "+p.stock+" left</div>";
-productGrid.innerHTML+=`
-<div class="product">
-<img src="${p.image}">
-<h4>${p.name}</h4>
-<p>₹${p.price}</p>
-${msg}
-<button ${p.stock<=0?"disabled":""} onclick="addToCart(${i})">Add to Cart</button>
-</div>`;
-});
+  productGrid.innerHTML = "";
+  products.forEach((p,i) => {
+    let msg = "";
+    if (p.stock <= 0) msg = "<div class='low-stock'>Out of Stock</div>";
+    else if (p.stock <= 3) msg = "<div class='low-stock'>Only "+p.stock+" left</div>";
+    productGrid.innerHTML += `
+      <div class="product">
+        <img src="${p.image}">
+        <h4>${p.name}</h4>
+        <p>₹${p.price}</p>
+        ${msg}
+        <button ${p.stock<=0?"disabled":""} onclick="addToCart(${i})">Add to Cart</button>
+      </div>`;
+  });
 }
 renderProducts();
 
 function addToCart(i){
-let p=products[i];
-if(p.stock<=0)return;
-let ex=cart.find(x=>x.index===i);
-if(ex && ex.qty>=3){alert("Max 3 allowed");return;}
-if(ex) ex.qty++; else cart.push({index:i,qty:1});
-p.stock--;updateCart();renderProducts();
+  let p = products[i];
+  if (p.stock <= 0) return;
+  let ex = cart.find(x => x.index === i);
+  if (ex && ex.qty >= 3) { alert("Max 3 allowed"); return; }
+  if (ex) ex.qty++;
+  else cart.push({index:i, qty:1});
+  p.stock--;
+  updateCart();
+  renderProducts();
 }
-
-function calculateDiscount(sub){
-if(sub<699)return 0;
-let percent=sub>=899?0.10:0.095;
-let discount=sub*percent;
-let after=sub-discount;
-after=Math.ceil(after); 
-discount=sub-after;
-let actualPercent=(discount/sub)*100;
-if(actualPercent<9) discount=sub*0.09;
-if(actualPercent>10) discount=sub*0.10;
-return Math.round(discount);
-}
-
-function toggleDiscount(){discountApplied=!discountApplied;updateCart();}
 
 function updateCart(){
-cartCount.innerText=cart.reduce((t,i)=>t+i.qty,0);
-let sub=0,html="";
-cart.forEach((item,i)=>{
-let p=products[item.index],total=p.price*item.qty;
-sub+=total;
-html+=`<div class="cart-item">
-${p.name}<br>
-<button class="qty-btn" onclick="decrease(${i})">-</button>
-${item.qty}
-<button class="qty-btn" onclick="increase(${i})">+</button>
-= ₹${total}
-</div>`;
-});
-let discount=discountApplied?calculateDiscount(sub):0;
-let after=sub-discount;
-let delivery=0;
-if(after<399) delivery=0;
-else if(after<699) delivery=discountApplied?20:40;
-else delivery=0;
-let final=after+delivery;
-let deliverySaved=(delivery==0?40-delivery: (delivery==20?20:0));
-let totalSaved=discount+deliverySaved;
+  cartCount.innerText = cart.reduce((t,i)=>t+i.qty,0);
 
-let discountUI="";
-if(sub>=699){
-discountUI=`<button class="discount-btn" onclick="toggleDiscount()">
-${discountApplied?"Remove Discount":"Apply Discount"}
-</button>`;
-}
-let saveMsg=discountApplied?`
-<div class="save-msg">
-🎉 Discount Saved: ₹${discount}<br>
-🚚 Delivery Saved: ₹${deliverySaved}<br>
-💰 Total Saved Today: ₹${totalSaved}
-</div>`:"";
+  let subtotal = 0;
+  let html = "";
 
-html+=`<div class="summary">
-Subtotal: ₹${sub}<br>
-Discount: -₹${discount}<br>
-Delivery: ₹${delivery}<br>
-<b>Final: ₹${final}</b>
-${discountUI}
-${saveMsg}
-</div>`;
+  cart.forEach((item, idx) => {
+    let p = products[item.index];
+    let itemTotal = p.price * item.qty;
+    subtotal += itemTotal;
 
-cartItems.innerHTML=html;
+    html += `<div class="cart-item">
+      ${p.name}<br>
+      <button class="qty-btn" onclick="decrease(${idx})">-</button>
+      ${item.qty}
+      <button class="qty-btn" onclick="increase(${idx})">+</button>
+      = ₹${itemTotal}
+    </div>`;
+  });
+
+  const discInfo = getDiscount(subtotal);
+  const afterDiscount = subtotal - discInfo.discount;
+
+  const delInfo = getDelivery(subtotal, afterDiscount);
+  const final = afterDiscount + delInfo.delivery;
+
+  let discountLine = discInfo.discount > 0
+    ? `Discount (${discInfo.percent}%): -₹${discInfo.discount}<br>`
+    : "";
+
+  let deliveryLine = "";
+  if (delInfo.delivery === 0) {
+    deliveryLine = `<span style="color:#27ae60">Free Delivery</span><br>`;
+  } else if (delInfo.delivery === HALF_DELIVERY) {
+    deliveryLine = `Delivery: ₹${delInfo.delivery} (50% reduced)<br>`;
+  } else {
+    deliveryLine = `Delivery: ₹${delInfo.delivery}<br>`;
+  }
+
+  let saveMsg = discInfo.discount > 0
+    ? `<div class="save-msg">🎉 You saved ₹${discInfo.discount} + possible delivery savings!</div>`
+    : "";
+
+  let warning = subtotal <= MIN_TOV_FOR_ORDER
+    ? `<div style="color:#e74c3c; margin:10px 0; font-weight:500;">Minimum order ₹400 required</div>`
+    : "";
+
+  html += `
+    <div class="summary">
+      Subtotal: ₹${subtotal}<br>
+      ${discountLine}
+      ${deliveryLine}
+      <b>Final Amount: ₹${final}</b>
+      ${saveMsg}
+      ${warning}
+    </div>`;
+
+  cartItems.innerHTML = html;
 }
 
 function increase(i){
-let item=cart[i],p=products[item.index];
-if(item.qty>=3){alert("Max 3 allowed");return;}
-if(p.stock<=0)return;
-item.qty++;p.stock--;updateCart();renderProducts();
+  let item = cart[i], p = products[item.index];
+  if (item.qty >= 3) { alert("Max 3 allowed"); return; }
+  if (p.stock <= 0) return;
+  item.qty++;
+  p.stock--;
+  updateCart();
+  renderProducts();
 }
+
 function decrease(i){
-let item=cart[i],p=products[item.index];
-item.qty--;p.stock++;
-if(item.qty<=0) cart.splice(i,1);
-updateCart();renderProducts();
+  let item = cart[i], p = products[item.index];
+  item.qty--;
+  p.stock++;
+  if (item.qty <= 0) cart.splice(i,1);
+  updateCart();
+  renderProducts();
 }
+
 function clearCart(){
-cart.forEach(item=>products[item.index].stock+=item.qty);
-cart=[];discountApplied=false;updateCart();renderProducts();
+  cart.forEach(item => products[item.index].stock += item.qty);
+  cart = [];
+  updateCart();
+  renderProducts();
 }
 
 function sendOrder(){
-let name=custName.value,phone=custPhone.value,address=custAddress.value;
-if(!name||!phone||!address){alert("Fill customer details");return;}
-let sub=cart.reduce((t,i)=>t+products[i.index].price*i.qty,0);
-if(sub<399){alert("Minimum ₹399 required");return;}
-let discount=discountApplied?calculateDiscount(sub):0;
-let after=sub-discount;
-let delivery=after<399?0:(after<699?(discountApplied?20:40):0);
-let final=after+delivery;
-let orderId="SM"+Date.now(),now=new Date().toLocaleString();
-orders.push({id:orderId,total:final});
-totalRevenue+=final;totalDiscount+=discount;totalDelivery+=delivery;
-cart.forEach(i=>{let n=products[i.index].name;productSales[n]=(productSales[n]||0)+i.qty;});
-renderAnalytics();renderOrders();
-let msg="🧾 Sunny Medicoze Invoice%0A%0A";
-msg+="Order ID: "+orderId+"%0ADate: "+now+"%0A%0A";
-msg+="Name: "+name+"%0APhone: "+phone+"%0AAddress: "+address+"%0A%0A";
-cart.forEach(i=>msg+=products[i.index].name+" x"+i.qty+"%0A");
-msg+="%0ASubtotal: ₹"+sub;
-msg+="%0ADiscount: -₹"+discount;
-msg+="%0ADelivery: ₹"+delivery;
-msg+="%0A💰 Final: ₹"+final;
-msg+="%0A%0A🎉 You Saved ₹"+(discount+(delivery==0?40:(delivery==20?20:0)));
-window.open("https://wa.me/919817824881?text="+msg,"_blank");
-clearCart();closeCart();
+  let name = custName.value.trim();
+  let phone = custPhone.value.trim();
+  let address = custAddress.value.trim();
+
+  if (!name || !phone || !address) {
+    alert("Please fill your name, phone and delivery address");
+    return;
+  }
+
+  if (cart.length === 0) {
+    alert("Your cart is empty");
+    return;
+  }
+
+  let subtotal = cart.reduce((t,i) => t + products[i.index].price * i.qty, 0);
+
+  if (subtotal <= MIN_TOV_FOR_ORDER) {
+    alert(`Minimum order subtotal is ₹${MIN_TOV_FOR_ORDER + 1}`);
+    return;
+  }
+
+  const discInfo = getDiscount(subtotal);
+  const afterDiscount = subtotal - discInfo.discount;
+
+  const delInfo = getDelivery(subtotal, afterDiscount);
+  if (!delInfo.canOrder) {
+    alert("Order cannot be placed - subtotal too low");
+    return;
+  }
+
+  const final = afterDiscount + delInfo.delivery;
+
+  let orderId = "SM" + Date.now();
+  let now = new Date().toLocaleString();
+
+  orders.push({id:orderId, total:final});
+  totalRevenue += final;
+  totalDiscount += discInfo.discount;
+  totalDelivery += delInfo.delivery;
+
+  cart.forEach(i => {
+    let n = products[i.index].name;
+    productSales[n] = (productSales[n] || 0) + i.qty;
+  });
+
+  renderAnalytics();
+  renderOrders();
+
+  let msg = "🧾 *Sunny Medicoze Order*%0A%0A";
+  msg += `Order ID: ${orderId}%0A`;
+  msg += `Date: ${now}%0A%0A`;
+  msg += `Name: ${name}%0A`;
+  msg += `Phone: ${phone}%0A`;
+  msg += `Address: ${address}%0A%0A`;
+
+  cart.forEach(i => {
+    msg += `${products[i.index].name} x${i.qty}%0A`;
+  });
+
+  msg += "%0A";
+  msg += `Subtotal: ₹${subtotal}%0A`;
+  if (discInfo.discount > 0) {
+    msg += `Discount (${discInfo.percent}%): -₹${discInfo.discount}%0A`;
+  }
+  msg += `Delivery: ₹${delInfo.delivery}`;
+  if (delInfo.delivery === HALF_DELIVERY) msg += " (50% reduced)";
+  if (delInfo.delivery === 0) msg += " (Free)";
+  msg += "%0A";
+  msg += `💰 *Final Payable: ₹${final}*%0A%0A`;
+  if (discInfo.discount > 0) {
+    msg += `🎉 You saved ₹${discInfo.discount} today!%0A`;
+  }
+  msg += "Thank you for shopping with Sunny Medicoze! 🙏";
+
+  window.open("https://wa.me/919817824881?text=" + msg, "_blank");
+
+  clearCart();
+  closeCart();
 }
 
 function renderOrders(){
-orderHistory.innerHTML="";
-orders.forEach(o=>orderHistory.innerHTML+=`Order ${o.id} - ₹${o.total}<br>`);
+  orderHistory.innerHTML = "";
+  orders.forEach(o => {
+    orderHistory.innerHTML += `Order ${o.id} - ₹${o.total}<br>`;
+  });
 }
+
 function renderAnalytics(){
-let best=Object.keys(productSales).reduce((a,b)=>productSales[a]>productSales[b]?a:b,"None");
-analyticsBox.innerHTML=`
-Total Orders: ${orders.length}<br>
-Total Revenue: ₹${totalRevenue}<br>
-Total Discount Given: ₹${totalDiscount}<br>
-Total Delivery Collected: ₹${totalDelivery}<br>
-Best Selling Product: ${best}
-`;
+  let best = "None";
+  let maxSales = 0;
+  Object.keys(productSales).forEach(n => {
+    if (productSales[n] > maxSales) {
+      maxSales = productSales[n];
+      best = n;
+    }
+  });
+
+  analyticsBox.innerHTML = `
+    Total Orders: ${orders.length}<br>
+    Total Revenue: ₹${totalRevenue}<br>
+    Total Discount Given: ₹${totalDiscount}<br>
+    Total Delivery Collected: ₹${totalDelivery}<br>
+    Best Selling Product: ${best}
+  `;
 }
 
 function toggleAdmin(){adminPanel.classList.toggle("active");}
-function loginAdmin(){if(adminPass.value==="sunnyadmin"){adminControls.style.display="block";renderInventory();renderAnalytics();renderOrders();}}
-function addProduct(){
-let reader=new FileReader();
-reader.onload=function(e){
-products.push({name:newName.value,price:parseFloat(newPrice.value),stock:parseInt(newStock.value),image:e.target.result});
-renderProducts();renderInventory();
-};
-if(newImage.files[0]) reader.readAsDataURL(newImage.files[0]);
-}
-function renderInventory(){
-inventoryList.innerHTML="";
-products.forEach((p,i)=>{
-inventoryList.innerHTML+=`
-<div class="inventory-item">
-<img src="${p.image}"><br>
-<b>${p.name}</b><br>
-Stock: <input type="number" value="${p.stock}" onchange="updateStock(${i},this.value)">
-<button onclick="deleteProduct(${i})">Delete</button>
-</div>`;
-});
-}
-function updateStock(i,val){products[i].stock=parseInt(val);renderProducts();}
-function deleteProduct(i){products.splice(i,1);cart=cart.filter(item=>item.index!==i);renderProducts();renderInventory();updateCart();}
 
-function openCart(){overlay.classList.add("active");cartDrawer.classList.add("active");}
-function closeCart(){overlay.classList.remove("active");cartDrawer.classList.remove("active");}
+function loginAdmin(){
+  if (adminPass.value === "sunnyadmin") {
+    adminControls.style.display = "block";
+    renderInventory();
+    renderAnalytics();
+    renderOrders();
+  } else {
+    alert("Incorrect password");
+  }
+}
+
+function addProduct(){
+  let reader = new FileReader();
+  reader.onload = function(e){
+    products.push({
+      name: newName.value,
+      price: parseFloat(newPrice.value),
+      stock: parseInt(newStock.value),
+      image: e.target.result
+    });
+    renderProducts();
+    renderInventory();
+  };
+  if (newImage.files[0]) reader.readAsDataURL(newImage.files[0]);
+  else alert("Please select an image");
+}
+
+function renderInventory(){
+  inventoryList.innerHTML = "";
+  products.forEach((p,i) => {
+    inventoryList.innerHTML += `
+      <div class="inventory-item">
+        <img src="${p.image}"><br>
+        <b>${p.name}</b><br>
+        Price: ₹${p.price}<br>
+        Stock: <input type="number" value="${p.stock}" onchange="updateStock(${i},this.value)">
+        <button onclick="deleteProduct(${i})">Delete</button>
+      </div>`;
+  });
+}
+
+function updateStock(i,val){
+  products[i].stock = parseInt(val) || 0;
+  renderProducts();
+}
+
+function deleteProduct(i){
+  products.splice(i,1);
+  cart = cart.filter(item => item.index !== i);
+  renderProducts();
+  renderInventory();
+  updateCart();
+}
+
+function openCart(){
+  overlay.classList.add("active");
+  cartDrawer.classList.add("active");
+  updateCart();
+}
+
+function closeCart(){
+  overlay.classList.remove("active");
+  cartDrawer.classList.remove("active");
+}
+
 function searchProducts(){
-let val=searchInput.value.toLowerCase();
-document.querySelectorAll(".product").forEach(p=>{
-p.style.display=p.innerText.toLowerCase().includes(val)?"block":"none";
-});
+  let val = searchInput.value.toLowerCase();
+  document.querySelectorAll(".product").forEach(p => {
+    p.style.display = p.innerText.toLowerCase().includes(val) ? "block" : "none";
+  });
 }
 </script>
 </body>
