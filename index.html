@@ -7,8 +7,6 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
-<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
 body{background:#f8f9fa;color:#333;overflow-x:hidden}
@@ -226,13 +224,11 @@ Shop Now
 </div>
 </section>
 
-<!-- Floating Cart -->
 <div class="cart-icon" onclick="toggleCart()">
 🛒
 <div class="cart-count" id="cartCount">0</div>
 </div>
 
-<!-- Cart Drawer -->
 <div class="cart-drawer" id="cartDrawer">
 <h3>Your Cart</h3>
 <div id="cartItems"></div>
@@ -240,57 +236,93 @@ Shop Now
 <div class="order-form">
 <input type="text" id="custName" placeholder="Your Name" required>
 <input type="text" id="custPhone" placeholder="Phone Number" required>
+<input type="text" id="custAddress" placeholder="Delivery Address" required>
 <button class="send-btn" onclick="sendOrder()">Send Order</button>
 </div>
 </div>
 
-<!-- WhatsApp -->
-<a class="whatsapp" href="https://wa.me/9817824881" target="_blank">💬</a>
+<a class="whatsapp" href="https://wa.me/919817824881" target="_blank">💬</a>
 
 <script>
-emailjs.init("YBdylKD_gXkk99HZn");
-
 let cart=[];
 
 function addToCart(name,price){
-cart.push({name,price});
+let existing=cart.find(item=>item.name===name);
+if(existing){
+existing.quantity+=1;
+}else{
+cart.push({name,price,quantity:1});
+}
 updateCart();
 }
 
 function updateCart(){
-document.getElementById("cartCount").innerText=cart.length;
+document.getElementById("cartCount").innerText=
+cart.reduce((total,item)=>total+item.quantity,0);
+
 let list="";
-cart.forEach(item=>{
-list+=`<div class='cart-item'>${item.name} - ₹${item.price}</div>`;
+let total=0;
+
+cart.forEach((item,index)=>{
+let itemTotal=item.price*item.quantity;
+total+=itemTotal;
+
+list+=`
+<div class='cart-item'>
+<b>${item.name}</b><br>
+₹${item.price} x 
+<button onclick="decreaseQty(${index})">-</button>
+${item.quantity}
+<button onclick="increaseQty(${index})">+</button>
+= ₹${itemTotal}
+<br>
+<button onclick="removeItem(${index})" style="color:red;border:none;background:none;cursor:pointer;">Remove</button>
+<hr>
+</div>`;
 });
+
+list+=`<h3>Total: ₹${total}</h3>`;
 document.getElementById("cartItems").innerHTML=list;
 }
 
-function toggleCart(){
-document.getElementById("cartDrawer").classList.toggle("active");
+function increaseQty(i){cart[i].quantity++;updateCart();}
+function decreaseQty(i){
+if(cart[i].quantity>1){cart[i].quantity--;}
+else{cart.splice(i,1);}
+updateCart();
 }
+function removeItem(i){cart.splice(i,1);updateCart();}
+function toggleCart(){document.getElementById("cartDrawer").classList.toggle("active");}
 
 function sendOrder(){
 let name=document.getElementById("custName").value;
 let phone=document.getElementById("custPhone").value;
+let address=document.getElementById("custAddress").value;
 
-if(!name||!phone||cart.length===0){
+if(!name||!phone||!address||cart.length===0){
 alert("Fill all details & add products");
 return;
 }
 
-let items=cart.map(i=>i.name+" - ₹"+i.price).join(", ");
+let total=0;
+let items=cart.map(i=>{
+let itemTotal=i.price*i.quantity;
+total+=itemTotal;
+return i.name+" (x"+i.quantity+") - ₹"+itemTotal;
+}).join("%0A");
 
-emailjs.send("service_q939efk","template_nxpkn7e",{
-customer_name:name,
-customer_phone:phone,
-order_items:items,
-to_email:"my1200911@gmail.com"
-}).then(()=>{
-alert("Order Sent Successfully!");
+let message=
+"🛒 *New Order - Sunny Medicoze* %0A%0A"+
+"👤 Name: "+name+"%0A"+
+"📞 Phone: "+phone+"%0A"+
+"🏠 Address: "+address+"%0A%0A"+
+"📦 Order Details:%0A"+items+
+"%0A%0A💰 Total: ₹"+total;
+
+window.open("https://wa.me/919817824881?text="+message,"_blank");
+
 cart=[];
 updateCart();
-});
 }
 </script>
 
