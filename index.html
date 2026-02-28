@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sunny Medicoze</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{background:#f8f9fa;color:#333;overflow-x:hidden}
+
+/* HEADER */
+header{
+background:white;
+padding:15px 20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+position:fixed;
+width:100%;
+top:0;
+box-shadow:0 2px 10px rgba(0,0,0,0.1);
+z-index:1000;
+}
+.logo{font-weight:600;font-size:20px;}
+.tagline{font-size:12px;color:#777}
+
+/* HERO */
+.hero{
+margin-top:70px;
+height:90vh;
+background:url('https://i.ibb.co/xKwmSVJM/fashion-store-front-banners-vector.jpg') center/cover no-repeat;
+display:flex;
+align-items:center;
+justify-content:center;
+text-align:center;
+color:white;
+position:relative;
+}
+.hero::after{
+content:"";
+position:absolute;
+width:100%;height:100%;
+background:rgba(0,0,0,0.5);
+top:0;left:0;
+}
+.hero-content{
+position:relative;
+z-index:2;
+}
+.hero h1{font-size:40px;margin-bottom:20px;}
+.hero button{
+padding:12px 30px;
+background:#00b894;
+color:white;
+border:none;
+border-radius:30px;
+cursor:pointer;
+font-size:16px;
+}
+
+/* PRODUCTS */
+.products{
+padding:60px 20px;
+}
+.carousel{
+display:flex;
+gap:20px;
+overflow-x:auto;
+scroll-behavior:smooth;
+}
+.product{
+min-width:250px;
+background:white;
+border-radius:15px;
+padding:15px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+.product img{
+width:100%;
+height:200px;
+object-fit:cover;
+border-radius:10px;
+}
+.product h3{margin:10px 0;}
+.product button{
+width:100%;
+padding:10px;
+background:#0984e3;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+/* FLOATING CART */
+.cart-icon{
+position:fixed;
+bottom:80px;
+right:20px;
+background:#ff4757;
+width:55px;height:55px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+color:white;
+font-size:20px;
+cursor:pointer;
+}
+.cart-count{
+position:absolute;
+top:-5px;right:-5px;
+background:black;
+color:white;
+font-size:12px;
+padding:3px 6px;
+border-radius:50%;
+}
+
+/* CART DRAWER */
+.cart-drawer{
+position:fixed;
+right:-400px;
+top:0;
+width:350px;
+height:100%;
+background:white;
+box-shadow:-5px 0 20px rgba(0,0,0,0.2);
+transition:0.3s;
+padding:20px;
+overflow-y:auto;
+z-index:2000;
+}
+.cart-drawer.active{right:0;}
+.cart-item{margin-bottom:10px;font-size:14px;}
+.order-form input{
+width:100%;
+margin-bottom:10px;
+padding:8px;
+border:1px solid #ddd;
+border-radius:5px;
+}
+.send-btn{
+background:#00b894;
+color:white;
+padding:10px;
+border:none;
+width:100%;
+border-radius:8px;
+cursor:pointer;
+}
+
+/* WHATSAPP */
+.whatsapp{
+position:fixed;
+bottom:20px;
+right:20px;
+background:#25d366;
+width:55px;height:55px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+color:white;
+font-size:22px;
+text-decoration:none;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div>
+<div class="logo">Sunny Medicoze</div>
+<div class="tagline">Best Quality and Price</div>
+</div>
+</header>
+
+<section class="hero">
+<div class="hero-content">
+<h1>Your Trusted Medical Store</h1>
+<button onclick="document.querySelector('.products').scrollIntoView({behavior:'smooth'})">
+Shop Now
+</button>
+</div>
+</section>
+
+<section class="products">
+<h2 style="margin-bottom:20px;">Our Products</h2>
+<div class="carousel">
+
+<div class="product">
+<img src="https://i.ibb.co/tnfsXrv/Screenshot-28-2-2026-9818-www-bing-com.jpg">
+<h3>Medical Product 1</h3>
+<p>₹199</p>
+<button onclick="addToCart('Medical Product 1',199)">Add to Cart</button>
+</div>
+
+<div class="product">
+<img src="https://i.ibb.co/tnfsXrv/Screenshot-28-2-2026-9818-www-bing-com.jpg">
+<h3>Medical Product 2</h3>
+<p>₹299</p>
+<button onclick="addToCart('Medical Product 2',299)">Add to Cart</button>
+</div>
+
+<div class="product">
+<img src="https://i.ibb.co/tnfsXrv/Screenshot-28-2-2026-9818-www-bing-com.jpg">
+<h3>Medical Product 3</h3>
+<p>₹149</p>
+<button onclick="addToCart('Medical Product 3',149)">Add to Cart</button>
+</div>
+
+<div class="product">
+<img src="https://i.ibb.co/tnfsXrv/Screenshot-28-2-2026-9818-www-bing-com.jpg">
+<h3>Medical Product 4</h3>
+<p>₹99</p>
+<button onclick="addToCart('Medical Product 4',99)">Add to Cart</button>
+</div>
+
+</div>
+</section>
+
+<!-- Floating Cart -->
+<div class="cart-icon" onclick="toggleCart()">
+🛒
+<div class="cart-count" id="cartCount">0</div>
+</div>
+
+<!-- Cart Drawer -->
+<div class="cart-drawer" id="cartDrawer">
+<h3>Your Cart</h3>
+<div id="cartItems"></div>
+
+<div class="order-form">
+<input type="text" id="custName" placeholder="Your Name" required>
+<input type="text" id="custPhone" placeholder="Phone Number" required>
+<button class="send-btn" onclick="sendOrder()">Send Order</button>
+</div>
+</div>
+
+<!-- WhatsApp -->
+<a class="whatsapp" href="https://wa.me/9817824881" target="_blank">💬</a>
+
+<script>
+emailjs.init("YOUR_PUBLIC_KEY");
+
+let cart=[];
+
+function addToCart(name,price){
+cart.push({name,price});
+updateCart();
+}
+
+function updateCart(){
+document.getElementById("cartCount").innerText=cart.length;
+let list="";
+cart.forEach(item=>{
+list+=`<div class='cart-item'>${item.name} - ₹${item.price}</div>`;
+});
+document.getElementById("cartItems").innerHTML=list;
+}
+
+function toggleCart(){
+document.getElementById("cartDrawer").classList.toggle("active");
+}
+
+function sendOrder(){
+let name=document.getElementById("custName").value;
+let phone=document.getElementById("custPhone").value;
+
+if(!name||!phone||cart.length===0){
+alert("Fill all details & add products");
+return;
+}
+
+let items=cart.map(i=>i.name+" - ₹"+i.price).join(", ");
+
+emailjs.send("YOUR_SERVICE_ID","YOUR_TEMPLATE_ID",{
+customer_name:name,
+customer_phone:phone,
+order_items:items,
+to_email:"my1200911@gmail.com"
+}).then(()=>{
+alert("Order Sent Successfully!");
+cart=[];
+updateCart();
+});
+}
+</script>
+
+</body>
+</html>
