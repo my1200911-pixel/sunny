@@ -38,7 +38,6 @@ header{background:white;padding:15px 20px;display:flex;justify-content:space-bet
 .cart-item{background:#f1f3f6;padding:12px;border-radius:10px;margin-bottom:12px;line-height:1.6;}
 .qty-btn{padding:4px 8px;margin:0 5px;background:#0984e3;color:white;border:none;border-radius:5px;cursor:pointer;}
 .summary{margin-top:15px;padding-top:10px;border-top:1px solid #ccc;line-height:1.8;}
-.discount-btn{background:#00cec9;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;margin-top:8px;}
 .save-msg{color:green;font-weight:600;margin-top:5px;}
 .clear-btn{background:#d63031;color:white;border:none;padding:6px 10px;border-radius:6px;margin-top:10px;cursor:pointer;}
 .send-btn{background:#00b894;color:white;padding:10px;border:none;width:100%;border-radius:8px;cursor:pointer;margin-top:10px;}
@@ -120,46 +119,6 @@ let products = [
   {name:"NOT OUT ADULT DIAPER M SIZE 10 PIECES PACK",price:299,stock:3,image:"https://i.ibb.co/ymr6DgzW/Screenshot-2026-02-28-114541.png"}
 ];
 
-// ────────────────────────────────────────────────
-// Pricing & Delivery Rules
-const DISCOUNT_RULES = [
-  { minSub: 0,    percent: 0,   maxDisc: 0   },
-  { minSub: 500,  percent: 15,  maxDisc: 150 },
-  { minSub: 1000, percent: 22,  maxDisc: 400 }
-];
-
-const MIN_TOV_FOR_ORDER       = 399;
-const BASE_DELIVERY_BELOW_700 = 40;
-const HALF_DELIVERY           = 20;
-// ────────────────────────────────────────────────
-
-function getDiscount(subtotal) {
-  let rule = DISCOUNT_RULES[0];
-  for (let r of DISCOUNT_RULES) {
-    if (subtotal >= r.minSub) rule = r;
-  }
-  let discount = Math.floor(subtotal * (rule.percent / 100));
-  if (rule.maxDisc > 0) discount = Math.min(discount, rule.maxDisc);
-  return { discount, percent: rule.percent };
-}
-
-function getDelivery(subtotal, afterDiscount) {
-  if (subtotal <= MIN_TOV_FOR_ORDER) {
-    return { delivery: 0, canOrder: false };
-  }
-
-  let baseDelivery = (subtotal <= 699) ? BASE_DELIVERY_BELOW_700 : 0;
-
-  let finalDelivery;
-  if (afterDiscount >= 699) {
-    finalDelivery = 0;
-  } else {
-    finalDelivery = HALF_DELIVERY; // ₹20
-  }
-
-  return { delivery: finalDelivery, canOrder: true };
-}
-
 function renderProducts(){
   productGrid.innerHTML = "";
   products.forEach((p,i) => {
@@ -182,12 +141,71 @@ function addToCart(i){
   let p = products[i];
   if (p.stock <= 0) return;
   let ex = cart.find(x => x.index === i);
-  if (ex && ex.qty >= 3) { alert("Max 3 allowed"); return; }
+  if (ex && ex.qty >= 3) { alert("Max 3 allowed per item"); return; }
   if (ex) ex.qty++;
   else cart.push({index:i, qty:1});
   p.stock--;
   updateCart();
   renderProducts();
+}
+
+function calculatePricing(subtotal) {
+  let discount = 0;
+  let discountText = "";
+
+  if (subtotal >= 899) {
+    discount = Math.min(subtotal * 0.10, 100);
+    discountText = "10% (max ₹100)";
+  } else if (subtotal > 699) {
+    // 9–10% such that after discount → ceiling to next whole number
+    let target = Math.ceil(subtotal * 0.90);           // start from 10%
+    let disc10 = subtotal - target;
+    let disc9  = subtotal - Math.ceil(subtotal * 0.91);
+
+    // choose the one closer to 9–10% range
+    if (disc10 / subtotal >= 0.09 && disc10 / subtotal <= 0.10) {
+      discount = disc10;
+      discountText = `${(disc10/subtotal*100).toFixed(1)}%`;
+    } else {
+      discount = disc9;
+      discountText = `${(disc9/subtotal*100).toFixed(1)}%`;
+    }
+  }
+  // else: below 699 → discount = 0
+
+  let afterDiscount = subtotal - discount;
+
+  let delivery = 0;
+  let deliveryText = "";
+
+  if (subtotal <= 399) {
+    delivery = 0;
+    deliveryText = "—";
+  } else if (subtotal <= 699) {
+    delivery = 40;
+    deliveryText = "₹40";
+  } else {
+    // tov > 699 → depends on after discount
+    if (afterDiscount >= 699) {
+      delivery = 0;
+      deliveryText = "Free";
+    } else {
+      delivery = 20;
+      deliveryText = "₹20 (reduced)";
+    }
+  }
+
+  let finalAmount = afterDiscount + delivery;
+
+  return {
+    subtotal,
+    discount,
+    discountText,
+    afterDiscount,
+    delivery,
+    deliveryText,
+    finalAmount
+  };
 }
 
 function updateCart(){
@@ -210,39 +228,31 @@ function updateCart(){
     </div>`;
   });
 
-  const discInfo = getDiscount(subtotal);
-  const afterDiscount = subtotal - discInfo.discount;
+  const price = calculatePricing(subtotal);
 
-  const delInfo = getDelivery(subtotal, afterDiscount);
-  const final = afterDiscount + delInfo.delivery;
-
-  let discountLine = discInfo.discount > 0
-    ? `Discount (${discInfo.percent}%): -₹${discInfo.discount}<br>`
+  let discountLine = price.discount > 0
+    ? `Discount (${price.discountText}): -₹${Math.round(price.discount)}<br>`
     : "";
 
-  let deliveryLine = "";
-  if (delInfo.delivery === 0) {
-    deliveryLine = `<span style="color:#27ae60">Free Delivery</span><br>`;
-  } else if (delInfo.delivery === HALF_DELIVERY) {
-    deliveryLine = `Delivery: ₹${delInfo.delivery} (50% reduced)<br>`;
-  } else {
-    deliveryLine = `Delivery: ₹${delInfo.delivery}<br>`;
+  let deliveryLine = price.deliveryText.includes("Free")
+    ? `<span style="color:#27ae60">Free Delivery</span><br>`
+    : `Delivery: ${price.deliveryText}<br>`;
+
+  let saveMsg = price.discount > 0
+    ? `<div class="save-msg">🎉 You saved ₹${Math.round(price.discount)} !</div>`
+    : "";
+
+  let warning = "";
+  if (subtotal <= 399) {
+    warning = `<div style="color:#e74c3c; margin:12px 0; font-weight:500;">Minimum order amount ₹400</div>`;
   }
-
-  let saveMsg = discInfo.discount > 0
-    ? `<div class="save-msg">🎉 You saved ₹${discInfo.discount} + possible delivery savings!</div>`
-    : "";
-
-  let warning = subtotal <= MIN_TOV_FOR_ORDER
-    ? `<div style="color:#e74c3c; margin:10px 0; font-weight:500;">Minimum order ₹400 required</div>`
-    : "";
 
   html += `
     <div class="summary">
       Subtotal: ₹${subtotal}<br>
       ${discountLine}
       ${deliveryLine}
-      <b>Final Amount: ₹${final}</b>
+      <b>Final Amount: ₹${Math.round(price.finalAmount)}</b>
       ${saveMsg}
       ${warning}
     </div>`;
@@ -277,8 +287,8 @@ function clearCart(){
 }
 
 function sendOrder(){
-  let name = custName.value.trim();
-  let phone = custPhone.value.trim();
+  let name    = custName.value.trim();
+  let phone   = custPhone.value.trim();
   let address = custAddress.value.trim();
 
   if (!name || !phone || !address) {
@@ -293,29 +303,20 @@ function sendOrder(){
 
   let subtotal = cart.reduce((t,i) => t + products[i.index].price * i.qty, 0);
 
-  if (subtotal <= MIN_TOV_FOR_ORDER) {
-    alert(`Minimum order subtotal is ₹${MIN_TOV_FOR_ORDER + 1}`);
+  if (subtotal <= 399) {
+    alert("Minimum order subtotal is ₹400");
     return;
   }
 
-  const discInfo = getDiscount(subtotal);
-  const afterDiscount = subtotal - discInfo.discount;
-
-  const delInfo = getDelivery(subtotal, afterDiscount);
-  if (!delInfo.canOrder) {
-    alert("Order cannot be placed - subtotal too low");
-    return;
-  }
-
-  const final = afterDiscount + delInfo.delivery;
+  const price = calculatePricing(subtotal);
 
   let orderId = "SM" + Date.now();
   let now = new Date().toLocaleString();
 
-  orders.push({id:orderId, total:final});
-  totalRevenue += final;
-  totalDiscount += discInfo.discount;
-  totalDelivery += delInfo.delivery;
+  orders.push({id:orderId, total: Math.round(price.finalAmount)});
+  totalRevenue += Math.round(price.finalAmount);
+  totalDiscount += Math.round(price.discount);
+  totalDelivery += price.delivery;
 
   cart.forEach(i => {
     let n = products[i.index].name;
@@ -328,28 +329,22 @@ function sendOrder(){
   let msg = "🧾 *Sunny Medicoze Order*%0A%0A";
   msg += `Order ID: ${orderId}%0A`;
   msg += `Date: ${now}%0A%0A`;
-  msg += `Name: ${name}%0A`;
-  msg += `Phone: ${phone}%0A`;
-  msg += `Address: ${address}%0A%0A`;
+  msg += `Name: ${name}%0APhone: ${phone}%0AAddress: ${address}%0A%0A`;
 
-  cart.forEach(i => {
-    msg += `${products[i.index].name} x${i.qty}%0A`;
-  });
+  cart.forEach(i => msg += `${products[i.index].name} x${i.qty}%0A`);
 
   msg += "%0A";
   msg += `Subtotal: ₹${subtotal}%0A`;
-  if (discInfo.discount > 0) {
-    msg += `Discount (${discInfo.percent}%): -₹${discInfo.discount}%0A`;
+  if (price.discount > 0) {
+    msg += `Discount (${price.discountText}): -₹${Math.round(price.discount)}%0A`;
   }
-  msg += `Delivery: ₹${delInfo.delivery}`;
-  if (delInfo.delivery === HALF_DELIVERY) msg += " (50% reduced)";
-  if (delInfo.delivery === 0) msg += " (Free)";
+  msg += `Delivery: ₹${price.delivery}`;
+  if (price.delivery === 20) msg += " (reduced)";
+  if (price.delivery === 0) msg += " (Free)";
   msg += "%0A";
-  msg += `💰 *Final Payable: ₹${final}*%0A%0A`;
-  if (discInfo.discount > 0) {
-    msg += `🎉 You saved ₹${discInfo.discount} today!%0A`;
-  }
-  msg += "Thank you for shopping with Sunny Medicoze! 🙏";
+  msg += `💰 *To Pay: ₹${Math.round(price.finalAmount)}*%0A%0A`;
+  if (price.discount > 0) msg += `Saved ₹${Math.round(price.discount)} today! 🎉%0A`;
+  msg += "Thank you! 🙏";
 
   window.open("https://wa.me/919817824881?text=" + msg, "_blank");
 
@@ -358,19 +353,15 @@ function sendOrder(){
 }
 
 function renderOrders(){
-  orderHistory.innerHTML = "";
-  orders.forEach(o => {
-    orderHistory.innerHTML += `Order ${o.id} - ₹${o.total}<br>`;
-  });
+  orderHistory.innerHTML = orders.map(o => `Order ${o.id} - ₹${o.total}<br>`).join("");
 }
 
 function renderAnalytics(){
-  let best = "None";
-  let maxSales = 0;
-  Object.keys(productSales).forEach(n => {
-    if (productSales[n] > maxSales) {
-      maxSales = productSales[n];
-      best = n;
+  let best = "None", maxSales = 0;
+  Object.keys(productSales).forEach(name => {
+    if (productSales[name] > maxSales) {
+      maxSales = productSales[name];
+      best = name;
     }
   });
 
@@ -379,11 +370,11 @@ function renderAnalytics(){
     Total Revenue: ₹${totalRevenue}<br>
     Total Discount Given: ₹${totalDiscount}<br>
     Total Delivery Collected: ₹${totalDelivery}<br>
-    Best Selling Product: ${best}
+    Best Selling: ${best}
   `;
 }
 
-function toggleAdmin(){adminPanel.classList.toggle("active");}
+function toggleAdmin(){ adminPanel.classList.toggle("active"); }
 
 function loginAdmin(){
   if (adminPass.value === "sunnyadmin") {
@@ -392,7 +383,7 @@ function loginAdmin(){
     renderAnalytics();
     renderOrders();
   } else {
-    alert("Incorrect password");
+    alert("Wrong password");
   }
 }
 
@@ -400,16 +391,19 @@ function addProduct(){
   let reader = new FileReader();
   reader.onload = function(e){
     products.push({
-      name: newName.value,
-      price: parseFloat(newPrice.value),
-      stock: parseInt(newStock.value),
+      name: newName.value.trim(),
+      price: parseFloat(newPrice.value) || 0,
+      stock: parseInt(newStock.value) || 0,
       image: e.target.result
     });
     renderProducts();
     renderInventory();
   };
-  if (newImage.files[0]) reader.readAsDataURL(newImage.files[0]);
-  else alert("Please select an image");
+  if (newImage.files[0]) {
+    reader.readAsDataURL(newImage.files[0]);
+  } else {
+    alert("Please select product image");
+  }
 }
 
 function renderInventory(){
@@ -417,23 +411,22 @@ function renderInventory(){
   products.forEach((p,i) => {
     inventoryList.innerHTML += `
       <div class="inventory-item">
-        <img src="${p.image}"><br>
+        <img src="${p.image}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;"><br>
         <b>${p.name}</b><br>
-        Price: ₹${p.price}<br>
-        Stock: <input type="number" value="${p.stock}" onchange="updateStock(${i},this.value)">
-        <button onclick="deleteProduct(${i})">Delete</button>
+        ₹${p.price} • Stock: <input type="number" value="${p.stock}" style="width:60px;" onchange="updateStock(${i},this.value)">
+        <button onclick="deleteProduct(${i})" style="margin-left:10px;">Delete</button>
       </div>`;
   });
 }
 
-function updateStock(i,val){
+function updateStock(i, val){
   products[i].stock = parseInt(val) || 0;
   renderProducts();
 }
 
 function deleteProduct(i){
   products.splice(i,1);
-  cart = cart.filter(item => item.index !== i);
+  cart = cart.filter(it => it.index !== i);
   renderProducts();
   renderInventory();
   updateCart();
@@ -452,8 +445,8 @@ function closeCart(){
 
 function searchProducts(){
   let val = searchInput.value.toLowerCase();
-  document.querySelectorAll(".product").forEach(p => {
-    p.style.display = p.innerText.toLowerCase().includes(val) ? "block" : "none";
+  document.querySelectorAll(".product").forEach(el => {
+    el.style.display = el.innerText.toLowerCase().includes(val) ? "" : "none";
   });
 }
 </script>
