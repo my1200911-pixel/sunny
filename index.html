@@ -197,30 +197,30 @@ Shop Now
 
 <div class="product">
 <img src="https://i.ibb.co/tnfsXrv/Screenshot-28-2-2026-9818-www-bing-com.jpg">
-<h3>Medical Product 1</h3>
-<p>₹199</p>
-<button onclick="addToCart('Medical Product 1',199)">Add to Cart</button>
+<h3>WHISPER CHOICE ULTRA XL PLUS 15 PADS</h3>
+<p>₹190</p>
+<button onclick="addToCart('WHISPER CHOICE ULTRA XL PLUS 15 PADS',190)">Add to Cart</button>
 </div>
 
 <div class="product">
-<img src="https://i.ibb.co/tnfsXrv/Screenshot-28-2-2026-9818-www-bing-com.jpg">
-<h3>Medical Product 2</h3>
+<img src="https://i.ibb.co/V0QyR8CV/Screenshot-2026-02-28-113859.png">
+<h3>SMART AND HANDSOME FW 150 GM</h3>
+<p>₹290</p>
+<button onclick="addToCart('SMART AND HANDSOME FW 150 GM',290)">Add to Cart</button>
+</div>
+
+<div class="product">
+<img src="https://i.ibb.co/TM757M6Z/Screenshot-2026-02-28-114158.png">
+<h3>LIPTON GREEN TEA HONEY LEMON 25 BAGS</h3>
+<p>₹170</p>
+<button onclick="addToCart('LIPTON GREEN TEA HONEY LEMON 25 BAGS',170)">Add to Cart</button>
+</div>
+
+<div class="product">
+<img src="https://i.ibb.co/ymr6DgzW/Screenshot-2026-02-28-114541.png">
+<h3>NOT OUT ADULT DIAPER M SIZE 10 PIECES PACK</h3>
 <p>₹299</p>
-<button onclick="addToCart('Medical Product 2',299)">Add to Cart</button>
-</div>
-
-<div class="product">
-<img src="https://i.ibb.co/tnfsXrv/Screenshot-28-2-2026-9818-www-bing-com.jpg">
-<h3>Medical Product 3</h3>
-<p>₹149</p>
-<button onclick="addToCart('Medical Product 3',149)">Add to Cart</button>
-</div>
-
-<div class="product">
-<img src="https://i.ibb.co/tnfsXrv/Screenshot-28-2-2026-9818-www-bing-com.jpg">
-<h3>Medical Product 4</h3>
-<p>₹99</p>
-<button onclick="addToCart('Medical Product 4',99)">Add to Cart</button>
+<button onclick="addToCart('NOT OUT ADULT DIAPER M SIZE 10 PIECES PACK',299)">Add to Cart</button>
 </div>
 
 </div>
@@ -248,7 +248,7 @@ Shop Now
 <a class="whatsapp" href="https://wa.me/9817824881" target="_blank">💬</a>
 
 <script>
-emailjs.init("YOUR_PUBLIC_KEY");
+emailjs.init(YBdylKD_gXkk99HZn);
 
 let cart=[];
 
@@ -281,7 +281,7 @@ return;
 
 let items=cart.map(i=>i.name+" - ₹"+i.price).join(", ");
 
-emailjs.send("YOUR_SERVICE_ID","YOUR_TEMPLATE_ID",{
+emailjs.send("service_q939efk","template_nxpkn7e",{
 customer_name:name,
 customer_phone:phone,
 order_items:items,
