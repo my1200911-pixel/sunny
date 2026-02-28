@@ -4,353 +4,385 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sunny Medicoze</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
-body{background:#f8f9fa;color:#333;overflow-x:hidden}
+body{background:#f8f9fa;color:#333;}
 
-/* HEADER */
 header{
-background:white;
-padding:15px 20px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-position:fixed;
-width:100%;
-top:0;
+background:white;padding:15px 20px;
+display:flex;justify-content:space-between;
+align-items:center;position:fixed;
+width:100%;top:0;
 box-shadow:0 2px 10px rgba(0,0,0,0.1);
 z-index:1000;
 }
+
 .logo{font-weight:600;font-size:20px;}
-.tagline{font-size:12px;color:#777}
+.admin-btn{background:#2d3436;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;}
 
-/* HERO */
 .hero{
-margin-top:70px;
-height:90vh;
+margin-top:70px;height:45vh;
 background:url('https://i.ibb.co/xKwmSVJM/fashion-store-front-banners-vector.jpg') center/cover no-repeat;
-display:flex;
-align-items:center;
-justify-content:center;
-text-align:center;
-color:white;
-position:relative;
+display:flex;align-items:center;justify-content:center;
+color:white;position:relative;text-align:center;
 }
-.hero::after{
-content:"";
-position:absolute;
-width:100%;height:100%;
-background:rgba(0,0,0,0.5);
-top:0;left:0;
-}
-.hero-content{
-position:relative;
-z-index:2;
-}
-.hero h1{font-size:40px;margin-bottom:20px;}
-.hero button{
-padding:12px 30px;
-background:#00b894;
-color:white;
-border:none;
-border-radius:30px;
-cursor:pointer;
-font-size:16px;
+.hero::after{content:"";position:absolute;width:100%;height:100%;background:rgba(0,0,0,0.5);top:0;left:0;}
+.hero-content{position:relative;z-index:2;}
+
+.products{padding:60px 20px;}
+.search-bar{
+width:100%;max-width:400px;
+padding:10px;margin-bottom:20px;
+border-radius:8px;border:1px solid #ccc;
 }
 
-/* PRODUCTS */
-.products{
-padding:60px 20px;
-}
-.carousel{
-display:flex;
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
 gap:20px;
-overflow-x:auto;
-scroll-behavior:smooth;
 }
+
 .product{
-min-width:250px;
-background:white;
-border-radius:15px;
-padding:15px;
-box-shadow:0 5px 15px rgba(0,0,0,0.1);
+background:white;border-radius:15px;
+padding:15px;box-shadow:0 5px 15px rgba(0,0,0,0.1);
+text-align:center;
 }
 .product img{
-width:100%;
-height:200px;
-object-fit:cover;
-border-radius:10px;
+width:100%;height:180px;
+object-fit:cover;border-radius:10px;
 }
-.product h3{margin:10px 0;}
 .product button{
-width:100%;
-padding:10px;
-background:#0984e3;
-color:white;
-border:none;
-border-radius:8px;
+margin-top:10px;width:100%;
+padding:10px;background:#0984e3;
+color:white;border:none;border-radius:8px;
 cursor:pointer;
 }
+.product button:disabled{background:gray;}
+.low-stock{color:red;font-size:12px;margin-top:5px;}
 
-/* FLOATING CART */
 .cart-icon{
-position:fixed;
-bottom:80px;
-right:20px;
-background:#ff4757;
-width:55px;height:55px;
-border-radius:50%;
-display:flex;
-align-items:center;
-justify-content:center;
-color:white;
-font-size:20px;
-cursor:pointer;
+position:fixed;bottom:80px;right:20px;
+background:#ff4757;width:55px;height:55px;
+border-radius:50%;display:flex;
+align-items:center;justify-content:center;
+color:white;font-size:20px;cursor:pointer;
+z-index:1001;
 }
 .cart-count{
-position:absolute;
-top:-5px;right:-5px;
-background:black;
-color:white;
-font-size:12px;
-padding:3px 6px;
-border-radius:50%;
+position:absolute;top:-5px;right:-5px;
+background:black;color:white;font-size:12px;
+padding:3px 6px;border-radius:50%;
 }
 
-/* CART DRAWER */
+.overlay{
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.4);
+display:none;z-index:1500;
+}
+.overlay.active{display:block;}
+
 .cart-drawer{
-position:fixed;
-right:-400px;
-top:0;
-width:350px;
-height:100%;
+position:fixed;right:-400px;top:0;
+width:400px;height:100%;
 background:white;
 box-shadow:-5px 0 20px rgba(0,0,0,0.2);
-transition:0.3s;
-padding:20px;
-overflow-y:auto;
-z-index:2000;
+transition:0.3s;padding:20px;
+overflow-y:auto;z-index:2000;
 }
 .cart-drawer.active{right:0;}
-.cart-item{margin-bottom:10px;font-size:14px;}
-.order-form input{
-width:100%;
-margin-bottom:10px;
-padding:8px;
-border:1px solid #ddd;
-border-radius:5px;
+
+.cart-header{
+display:flex;justify-content:space-between;
+align-items:center;margin-bottom:15px;
 }
-.send-btn{
-background:#00b894;
-color:white;
-padding:10px;
-border:none;
-width:100%;
-border-radius:8px;
-cursor:pointer;
+.close-btn{cursor:pointer;font-weight:bold;color:red;}
+
+.cart-item{
+background:#f1f3f6;padding:12px;
+border-radius:10px;margin-bottom:12px;
+line-height:1.6;
 }
 
-/* WHATSAPP */
-.whatsapp{
-position:fixed;
-bottom:20px;
-right:20px;
-background:#25d366;
-width:55px;height:55px;
-border-radius:50%;
-display:flex;
-align-items:center;
-justify-content:center;
-color:white;
-font-size:22px;
-text-decoration:none;
+.qty-btn{
+padding:4px 8px;margin:0 5px;
+background:#0984e3;color:white;
+border:none;border-radius:5px;cursor:pointer;
 }
+
+.summary{
+margin-top:15px;padding-top:10px;
+border-top:1px solid #ccc;
+line-height:1.8;
+}
+
+.delivery-note{font-size:13px;margin-top:5px;color:#e17055;}
+
+.discount-btn{
+background:#00cec9;color:white;
+border:none;padding:6px 12px;
+border-radius:6px;cursor:pointer;margin-top:8px;
+}
+
+.save-msg{
+color:green;font-weight:600;margin-top:5px;
+}
+
+.clear-btn{
+background:#d63031;color:white;
+border:none;padding:6px 10px;
+border-radius:6px;margin-top:10px;cursor:pointer;
+}
+
+.send-btn{
+background:#00b894;color:white;
+padding:10px;border:none;width:100%;
+border-radius:8px;cursor:pointer;margin-top:10px;
+}
+
+/* Admin Panel */
+.admin-panel{
+position:fixed;top:0;left:-350px;
+width:320px;height:100%;
+background:white;
+box-shadow:5px 0 20px rgba(0,0,0,0.2);
+padding:20px;transition:0.3s;
+z-index:3000;overflow:auto;
+}
+.admin-panel.active{left:0;}
+.admin-close{cursor:pointer;color:red;font-weight:bold;margin-bottom:10px;}
+.admin-panel input{width:100%;padding:8px;margin-bottom:10px;}
 </style>
 </head>
 
 <body>
 
 <header>
-<div>
 <div class="logo">Sunny Medicoze</div>
-<div class="tagline">Best Quality and Price</div>
-</div>
+<button class="admin-btn" onclick="toggleAdmin()">Admin</button>
 </header>
+
+<div class="admin-panel" id="adminPanel">
+<div class="admin-close" onclick="toggleAdmin()">✕ Close</div>
+<h3>Admin Panel</h3>
+<input type="password" id="adminPass" placeholder="Enter Password">
+<button onclick="loginAdmin()">Login</button>
+<div id="adminControls" style="display:none;">
+<h4>Add Product</h4>
+<input type="text" id="newName" placeholder="Product Name">
+<input type="number" id="newPrice" placeholder="Price">
+<input type="number" id="newStock" placeholder="Stock">
+<button onclick="addProduct()">Add Product</button>
+</div>
+</div>
 
 <section class="hero">
 <div class="hero-content">
 <h1>Your Trusted Medical Store</h1>
-<button onclick="document.querySelector('.products').scrollIntoView({behavior:'smooth'})">
-Shop Now
-</button>
 </div>
 </section>
 
 <section class="products">
-<h2 style="margin-bottom:20px;">Our Products</h2>
-<div class="carousel">
-
-<div class="product">
-<img src="https://i.ibb.co/tnfsXrv/Screenshot-28-2-2026-9818-www-bing-com.jpg">
-<h3>WHISPER CHOICE ULTRA XL PLUS 15 PADS</h3>
-<p>₹190</p>
-<button onclick="addToCart('WHISPER CHOICE ULTRA XL PLUS 15 PADS',190)">Add to Cart</button>
-</div>
-
-<div class="product">
-<img src="https://i.ibb.co/V0QyR8CV/Screenshot-2026-02-28-113859.png">
-<h3>SMART AND HANDSOME FW 150 GM</h3>
-<p>₹290</p>
-<button onclick="addToCart('SMART AND HANDSOME FW 150 GM',290)">Add to Cart</button>
-</div>
-
-<div class="product">
-<img src="https://i.ibb.co/TM757M6Z/Screenshot-2026-02-28-114158.png">
-<h3>LIPTON GREEN TEA HONEY LEMON 25 BAGS</h3>
-<p>₹170</p>
-<button onclick="addToCart('LIPTON GREEN TEA HONEY LEMON 25 BAGS',170)">Add to Cart</button>
-</div>
-
-<div class="product">
-<img src="https://i.ibb.co/ymr6DgzW/Screenshot-2026-02-28-114541.png">
-<h3>NOT OUT ADULT DIAPER M SIZE 10 PIECES PACK</h3>
-<p>₹299</p>
-<button onclick="addToCart('NOT OUT ADULT DIAPER M SIZE 10 PIECES PACK',299)">Add to Cart</button>
-</div>
-
-  <div class="product">
-<img src="https://i.ibb.co/0jW0VhB/fair-lovely-cream-small.jpg">
-<h3>FAIR & LOVELY CREAM SMALL</h3>
-<p>₹72</p>
-<button onclick="addToCart('FAIR & LOVELY CREAM SMALL',72)">Add to Cart</button>
-</div>
-
-<div class="product">
-<img src="https://i.ibb.co/5KQ6WmW/whisper-pack-6.jpg">
-<h3>WHISPER CHOICE ULTRA XL PACK OF 6</h3>
-<p>₹50</p>
-<button onclick="addToCart('WHISPER CHOICE ULTRA XL PACK OF 6',50)">Add to Cart</button>
-</div>
-
-<div class="product">
-<img src="https://i.ibb.co/8gH1zjK/garnier-face-serum-small.jpg">
-<h3>GARNIER FACE SERUM SMALL</h3>
-<p>₹190</p>
-<button onclick="addToCart('GARNIER FACE SERUM SMALL',190)">Add to Cart</button>
-</div>
-
-<div class="product">
-<img src="https://i.ibb.co/fk1zC6F/sensodyne-fresh-gel-75g.jpg">
-<h3>SENSODYNE FRESH GEL TOOTHPASTE 75GM</h3>
-<p>₹124</p>
-<button onclick="addToCart('SENSODYNE FRESH GEL TOOTHPASTE 75GM',124)">Add to Cart</button>
-</div>
-  
-</div>
+<h2>Our Products</h2>
+<input type="text" id="searchInput" class="search-bar" placeholder="Search..." onkeyup="searchProducts()">
+<div class="grid" id="productGrid"></div>
 </section>
 
-<div class="cart-icon" onclick="toggleCart()">
-🛒
+<div class="cart-icon" onclick="openCart()">🛒
 <div class="cart-count" id="cartCount">0</div>
 </div>
 
+<div class="overlay" id="overlay" onclick="closeCart()"></div>
+
 <div class="cart-drawer" id="cartDrawer">
+<div class="cart-header">
 <h3>Your Cart</h3>
+<div class="close-btn" onclick="closeCart()">✕</div>
+</div>
+
 <div id="cartItems"></div>
 
-<div class="order-form">
-<input type="text" id="custName" placeholder="Your Name" required>
-<input type="text" id="custPhone" placeholder="Phone Number" required>
-<input type="text" id="custAddress" placeholder="Delivery Address" required>
+<input type="text" id="custName" placeholder="Your Name">
+<input type="text" id="custPhone" placeholder="Phone Number">
+<input type="text" id="custAddress" placeholder="Delivery Address">
+
+<button class="clear-btn" onclick="clearCart()">Clear Cart</button>
 <button class="send-btn" onclick="sendOrder()">Send Order</button>
 </div>
-</div>
-
-<a class="whatsapp" href="https://wa.me/919817824881" target="_blank">💬</a>
 
 <script>
 let cart=[];
+let discountApplied=false;
 
-function addToCart(name,price){
-let existing=cart.find(item=>item.name===name);
-if(existing){
-existing.quantity+=1;
-}else{
-cart.push({name,price,quantity:1});
+let products=[
+{name:"WHISPER CHOICE ULTRA XL PLUS 15 PADS",price:190,stock:10,image:"https://i.ibb.co/tnfsXrv/Screenshot-28-2-2026-9818-www-bing-com.jpg"},
+{name:"SMART AND HANDSOME FW 150 GM",price:290,stock:5,image:"https://i.ibb.co/V0QyR8CV/Screenshot-2026-02-28-113859.png"},
+{name:"LIPTON GREEN TEA HONEY LEMON 25 BAGS",price:170,stock:8,image:"https://i.ibb.co/TM757M6Z/Screenshot-2026-02-28-114158.png"},
+{name:"NOT OUT ADULT DIAPER M SIZE 10 PIECES PACK",price:299,stock:3,image:"https://i.ibb.co/ymr6DgzW/Screenshot-2026-02-28-114541.png"}
+];
+
+function renderProducts(){
+productGrid.innerHTML="";
+products.forEach((p,i)=>{
+let msg="";
+if(p.stock<=0) msg="<div class='low-stock'>Out of Stock</div>";
+else if(p.stock<=3) msg="<div class='low-stock'>Only "+p.stock+" left</div>";
+
+productGrid.innerHTML+=`
+<div class="product">
+<img src="${p.image}">
+<h4>${p.name}</h4>
+<p>₹${p.price}</p>
+${msg}
+<button ${p.stock<=0?"disabled":""} onclick="addToCart(${i})">Add to Cart</button>
+</div>`;
+});
 }
-updateCart();
+renderProducts();
+
+function addToCart(i){
+let p=products[i];
+if(p.stock<=0)return;
+let ex=cart.find(x=>x.index===i);
+if(ex && ex.qty>=3){alert("Maximum 3 units allowed.");return;}
+if(ex) ex.qty++; else cart.push({index:i,qty:1});
+p.stock--;
+updateCart();renderProducts();
 }
+
+function smartDiscount(sub){
+let target=Math.floor(sub*0.91/10)*10;
+let disc=sub-target;
+let percent=(disc/sub)*100;
+if(percent<9) disc=sub*0.09;
+if(percent>10) disc=sub*0.10;
+return Math.round(disc);
+}
+
+function toggleDiscount(){discountApplied=!discountApplied;updateCart();}
 
 function updateCart(){
-document.getElementById("cartCount").innerText=
-cart.reduce((total,item)=>total+item.quantity,0);
-
-let list="";
-let total=0;
-
-cart.forEach((item,index)=>{
-let itemTotal=item.price*item.quantity;
-total+=itemTotal;
-
-list+=`
-<div class='cart-item'>
-<b>${item.name}</b><br>
-₹${item.price} x 
-<button onclick="decreaseQty(${index})">-</button>
-${item.quantity}
-<button onclick="increaseQty(${index})">+</button>
-= ₹${itemTotal}
-<br>
-<button onclick="removeItem(${index})" style="color:red;border:none;background:none;cursor:pointer;">Remove</button>
-<hr>
+cartCount.innerText=cart.reduce((t,i)=>t+i.qty,0);
+let sub=0;let html="";
+cart.forEach((item,i)=>{
+let p=products[item.index];
+let total=p.price*item.qty;
+sub+=total;
+html+=`<div class="cart-item">
+${p.name}<br>
+<button class="qty-btn" onclick="decrease(${i})">-</button>
+${item.qty}
+<button class="qty-btn" onclick="increase(${i})">+</button>
+= ₹${total}
 </div>`;
 });
 
-list+=`<h3>Total: ₹${total}</h3>`;
-document.getElementById("cartItems").innerHTML=list;
+let discount=discountApplied?smartDiscount(sub):0;
+let delivery=sub<699?40:0;
+let final=sub-discount+delivery;
+
+let discountSection=sub>=399?`
+<button class="discount-btn" onclick="toggleDiscount()">
+${discountApplied?"Remove Discount":"Apply Discount"}
+</button>`:"";
+
+let saveMsg=discountApplied?`<div class="save-msg">🎉 Yay! You saved ₹${discount}</div>`:"";
+let deliveryMsg=sub<699?`Add ₹${(699-sub).toFixed(2)} more to avoid delivery charge.`:`Free Delivery Applied`;
+
+html+=`<div class="summary">
+Subtotal: ₹${sub}<br>
+Discount: -₹${discount}<br>
+Delivery: ₹${delivery}<br>
+<b>Final: ₹${final}</b>
+<div class="delivery-note">${deliveryMsg}</div>
+${discountSection}
+${saveMsg}
+</div>`;
+
+cartItems.innerHTML=html;
 }
 
-function increaseQty(i){cart[i].quantity++;updateCart();}
-function decreaseQty(i){
-if(cart[i].quantity>1){cart[i].quantity--;}
-else{cart.splice(i,1);}
-updateCart();
+function increase(i){
+let item=cart[i];
+if(item.qty>=3){alert("Maximum 3 units allowed.");return;}
+if(products[item.index].stock<=0)return;
+item.qty++;products[item.index].stock--;
+updateCart();renderProducts();
 }
-function removeItem(i){cart.splice(i,1);updateCart();}
-function toggleCart(){document.getElementById("cartDrawer").classList.toggle("active");}
+
+function decrease(i){
+let item=cart[i];
+item.qty--;products[item.index].stock++;
+if(item.qty<=0) cart.splice(i,1);
+updateCart();renderProducts();
+}
+
+function clearCart(){
+cart.forEach(item=>products[item.index].stock+=item.qty);
+cart=[];discountApplied=false;
+updateCart();renderProducts();
+}
 
 function sendOrder(){
 let name=document.getElementById("custName").value;
 let phone=document.getElementById("custPhone").value;
 let address=document.getElementById("custAddress").value;
 
-if(!name||!phone||!address||cart.length===0){
-alert("Fill all details & add products");
+if(!name || !phone || !address){
+alert("Please fill customer details.");
 return;
 }
 
-let total=0;
-let items=cart.map(i=>{
-let itemTotal=i.price*i.quantity;
-total+=itemTotal;
-return i.name+" (x"+i.quantity+") - ₹"+itemTotal;
-}).join("%0A");
+let sub=cart.reduce((t,i)=>t+products[i.index].price*i.qty,0);
+if(sub<399){alert("Minimum order ₹399 required.");return;}
 
-let message=
-"🛒 *New Order - Sunny Medicoze* %0A%0A"+
-"👤 Name: "+name+"%0A"+
-"📞 Phone: "+phone+"%0A"+
-"🏠 Address: "+address+"%0A%0A"+
-"📦 Order Details:%0A"+items+
-"%0A%0A💰 Total: ₹"+total;
+let discount=discountApplied?smartDiscount(sub):0;
+let delivery=sub<699?40:0;
+let final=sub-discount+delivery;
 
-window.open("https://wa.me/919817824881?text="+message,"_blank");
+let msg="🧾 Sunny Medicoze Invoice%0A%0A";
+msg+="Name: "+name+"%0A";
+msg+="Phone: "+phone+"%0A";
+msg+="Address: "+address+"%0A%0A";
 
-cart=[];
-updateCart();
+cart.forEach(i=>msg+=products[i.index].name+" x"+i.qty+"%0A");
+
+msg+="%0ASubtotal: ₹"+sub;
+msg+="%0ADiscount: -₹"+discount;
+msg+="%0ADelivery: ₹"+delivery;
+msg+="%0A💰 Final: ₹"+final;
+
+window.open("https://wa.me/919817824881?text="+msg,"_blank");
+
+clearCart();closeCart();
+}
+
+function openCart(){overlay.classList.add("active");cartDrawer.classList.add("active");}
+function closeCart(){overlay.classList.remove("active");cartDrawer.classList.remove("active");}
+
+function searchProducts(){
+let val=searchInput.value.toLowerCase();
+document.querySelectorAll(".product").forEach(p=>{
+p.style.display=p.innerText.toLowerCase().includes(val)?"block":"none";
+});
+}
+
+/* Admin */
+function toggleAdmin(){adminPanel.classList.toggle("active");}
+function loginAdmin(){
+if(adminPass.value==="sunnyadmin"){
+adminControls.style.display="block";
+}
+}
+function addProduct(){
+products.push({
+name:newName.value,
+price:parseFloat(newPrice.value),
+stock:parseInt(newStock.value),
+image:"https://via.placeholder.com/200"
+});
+renderProducts();
 }
 </script>
 
